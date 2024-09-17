@@ -13,7 +13,7 @@ int main(){
     TextFile *f = create_file("teste.txt");
 
     add_line(f, "AAA", 1);
-    add_line(f, "BBB", -1);
+    add_line(f, "BBB", 1);
     add_line(f, "CCC", 1);
     add_line(f, "DDD", 1);
     add_line(f, "EEE", 1);
@@ -27,8 +27,6 @@ int main(){
     pointer_edit_move_up(f);
     pointer_edit_move_up(f);
     pointer_edit_move_up(f);
-
-    printf("PONT %s\n", f->pointer_edit->content);
 
     add_line(f, "ZZZ", 0);
 

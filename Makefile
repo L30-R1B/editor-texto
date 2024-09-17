@@ -11,9 +11,9 @@ TARGET = main
 OBJDIR = obj
 
 # Lista de arquivos fonte
-SOURCES = src/main.c src/save.c src/open.c src/edit.c src/file.c src/stack.c
+SOURCES = src/main.c src/save.c src/open.c src/edit.c src/file.c src/stack.c src/file_editor.c
 # Lista de cabeçalhos
-HEADERS = include/save.h include/open.h include/edit.h include/file.h include/stack.h
+HEADERS = include/save.h include/open.h include/edit.h include/file.h include/stack.h include/file_editor.h
 
 # Gera os nomes dos arquivos objeto
 OBJECTS = $(patsubst src/%.c,$(OBJDIR)/%.o,$(SOURCES))

@@ -8,35 +8,37 @@
 #include "../include/edit.h"
 #include "../include/file.h"
 
-void pointer_edit_move_up(TextFile *file) {
-    if (file->pointer_edit != NULL && file->pointer_edit->previous != NULL) {
-        file->pointer_edit = file->pointer_edit->previous;
-        if(file->line_marker >= (strlen(file->pointer_edit->content) - 1))
-            file->line_marker = (strlen(file->pointer_edit->content) - 1);
+void pointer_line_edit_move_up(TextFile *file) {
+    if (file->pointer_line_edit != NULL && file->pointer_line_edit->previous != NULL) {
+        file->pointer_line_edit = file->pointer_line_edit->previous;
+        file->index_pointer_line --;
+        if(file->line_marker_edit >= (strlen(file->pointer_line_edit->content) - 1))
+            file->line_marker_edit = (strlen(file->pointer_line_edit->content) - 1);
     } else {
         printf("Não é possível mover o ponteiro para cima. Linha já está no início ou lista está vazia.\n");
     }
 }
 
-void pointer_edit_move_down(TextFile *file) {
-    if (file->pointer_edit != NULL && file->pointer_edit->next != NULL) {
-        file->pointer_edit = file->pointer_edit->next;
-        if(file->line_marker >= (strlen(file->pointer_edit->content) - 1))
-            file->line_marker = (strlen(file->pointer_edit->content) - 1);
+void pointer_line_edit_move_down(TextFile *file) {
+    if (file->pointer_line_edit != NULL && file->pointer_line_edit->next != NULL) {
+        file->pointer_line_edit = file->pointer_line_edit->next;
+        file->index_pointer_line ++;
+        if(file->line_marker_edit >= (strlen(file->pointer_line_edit->content) - 1))
+            file->line_marker_edit = (strlen(file->pointer_line_edit->content) - 1);
     } else {
         printf("Não é possível mover o ponteiro para baixo. Linha já está no fim ou lista está vazia.\n");
     }
 }
 
-void line_marker_move_left(TextFile *file){
-    if(!file->line_marker)
+void line_marker_edit_move_left(TextFile *file){
+    if(!file->line_marker_edit)
         return;
-    file->line_marker --;
+    file->line_marker_edit --;
 }
-void line_marker_move_right(TextFile *file){
-    if(file->line_marker >= (strlen(file->pointer_edit->content) - 1))
+void line_marker_edit_move_right(TextFile *file){
+    if(file->line_marker_edit >= (strlen(file->pointer_line_edit->content) - 1))
         return;
-    file->line_marker ++;
+    file->line_marker_edit ++;
 }
 
 void new_line(TextFile *file) {
@@ -52,20 +54,19 @@ void new_line(TextFile *file) {
         free(new_line);
         return;
     }
-    new_line->select = 0;
     
     new_line->previous = NULL;
     new_line->next = NULL;
 
-    if (file->pointer_edit != NULL) {
-        new_line->next = file->pointer_edit->next;
-        new_line->previous = file->pointer_edit;
+    if (file->pointer_line_edit != NULL) {
+        new_line->next = file->pointer_line_edit->next;
+        new_line->previous = file->pointer_line_edit;
         
-        if (file->pointer_edit->next != NULL) {
-            file->pointer_edit->next->previous = new_line;
+        if (file->pointer_line_edit->next != NULL) {
+            file->pointer_line_edit->next->previous = new_line;
         }
         
-        file->pointer_edit->next = new_line;
+        file->pointer_line_edit->next = new_line;
     } else {
         new_line->next = file->init;
         if (file->init != NULL) {
@@ -74,7 +75,8 @@ void new_line(TextFile *file) {
         file->init = new_line;
     }
     
-    file->pointer_edit = new_line;
+    file->pointer_line_edit = new_line;
+    file->index_pointer_line ++;
 }
 
 void add_line(TextFile *file, const char *content, int position) {
@@ -85,32 +87,31 @@ void add_line(TextFile *file, const char *content, int position) {
     }
     
     new_line->content = strdup(content);
-    new_line->select = 0;
     new_line->previous = NULL;
     new_line->next = NULL;
 
     if (file->init == NULL) {
         file->init = new_line;
-        file->pointer_edit = new_line;
+        file->pointer_line_edit = new_line;
     } else {
-        if (file->pointer_edit != NULL) {
+        if (file->pointer_line_edit != NULL) {
             if (position == -1) {
-                new_line->next = file->pointer_edit;
-                new_line->previous = file->pointer_edit->previous;
+                new_line->next = file->pointer_line_edit;
+                new_line->previous = file->pointer_line_edit->previous;
 
-                if (file->pointer_edit->previous != NULL) {
-                    file->pointer_edit->previous->next = new_line;
+                if (file->pointer_line_edit->previous != NULL) {
+                    file->pointer_line_edit->previous->next = new_line;
                 } else {
                     file->init = new_line;
                 }
-                file->pointer_edit->previous = new_line;
+                file->pointer_line_edit->previous = new_line;
             } else if (position == 0) {
-                if (file->pointer_edit != NULL) {
-                    free(file->pointer_edit->content);
-                    file->pointer_edit->content = strdup(content);
-                    file->pointer_edit->select = 0;
+                if (file->pointer_line_edit != NULL) {
+                    free(file->pointer_line_edit->content);
+                    file->pointer_line_edit->content = strdup(content);
                     free(new_line->content);
                     free(new_line);
+                    file->index_pointer_line ++;
                     return;
                 } else {
                     new_line->next = file->init;
@@ -120,14 +121,14 @@ void add_line(TextFile *file, const char *content, int position) {
                     file->init = new_line;
                 }
             } else if (position == 1) {
-                new_line->next = file->pointer_edit->next;
-                new_line->previous = file->pointer_edit;
+                new_line->next = file->pointer_line_edit->next;
+                new_line->previous = file->pointer_line_edit;
 
-                if (file->pointer_edit->next != NULL) {
-                    file->pointer_edit->next->previous = new_line;
+                if (file->pointer_line_edit->next != NULL) {
+                    file->pointer_line_edit->next->previous = new_line;
                 }
 
-                file->pointer_edit->next = new_line;
+                file->pointer_line_edit->next = new_line;
             }
         } else {
             new_line->next = file->init;
@@ -138,8 +139,10 @@ void add_line(TextFile *file, const char *content, int position) {
         }
 
         if (position != 0) {
-            file->pointer_edit = new_line;
+            file->pointer_line_edit = new_line;
         }
+        if(position != -1)
+            file->index_pointer_line ++;
     }
 }
 
@@ -173,7 +176,7 @@ void remove_line(TextFile *file, unsigned long index) {
         current->next->previous = current->previous;
     }
 
-    file->pointer_edit = current->previous;
+    file->pointer_line_edit = current->previous;
 
     free(current->content);
     free(current);

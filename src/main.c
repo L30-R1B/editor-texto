@@ -12,25 +12,18 @@
 int main(){
     TextFile *f = create_file("teste.txt");
 
-    add_line(f, "AAA", 1);
-    add_line(f, "BBB", 1);
-    add_line(f, "CCC", 1);
-    add_line(f, "DDD", 1);
-    add_line(f, "EEE", 1);
-    add_line(f, "FFF", 1);
-    add_line(f, "GGG", 1);
-    add_line(f, "HHH", 1);
+    add_line(f, "AAA\n", 1);
+    add_line(f, "BBB\n", -1);
+    add_line(f, "CCC\n", 0);
+    add_line(f, "DDD\n", 1);
+    add_line(f, "EEE\n", -1);
+    add_line(f, "FFF\n", -1);
+    add_line(f, "GGG\n", 0);
+    add_line(f, "HHH\n", 1);
 
-    pointer_edit_move_up(f);
-    pointer_edit_move_up(f);
-    pointer_edit_move_up(f);
-    pointer_edit_move_up(f);
-    pointer_edit_move_up(f);
-    pointer_edit_move_up(f);
-
-    add_line(f, "ZZZ", 0);
-
-    new_line(f);
+    printf("(%u) %s", f->index_pointer_line, f->pointer_line_edit->content);
+    add_line(f, "Teste\n", -1);
+    printf("(%u) %s", f->index_pointer_line, f->pointer_line_edit->content);
 
     print_file(f);
 

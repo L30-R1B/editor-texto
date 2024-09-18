@@ -21,11 +21,19 @@ TextFile *create_file(const char *file_path) {
     file->del = (Trash*) malloc(sizeof(Trash));
     init_stack(file->del);
 
-    file->line_marker = 0;
+    file->select_area = (SelectArea*) malloc(sizeof(SelectArea));
+    file->select_area->active = 0;
+    file->select_area->line_end = 0;
+    file->select_area->line_end_marker = 0;
+    file->select_area->line_start = 0;
+    file->select_area->line_start_marker = 0;
+
+    file->line_marker_edit = 0;
     
     strncpy(file->file_path, file_path, sizeof(file->file_path) - 1);
     file->file_path[sizeof(file->file_path) - 1] = '\0';
-    file->pointer_edit = NULL;
+    file->pointer_line_edit = NULL;
+    file->index_pointer_line = 0;
     file->init = NULL;
 
     return file;
@@ -49,6 +57,9 @@ void free_file(TextFile *file) {
         free(file->del);
     }
 
+    if(file->select_area != NULL)
+        free(file->select_area);
+
     free(file);
 }
 
@@ -63,7 +74,7 @@ void print_file(TextFile *file) {
     printf("---------------------\n");
     printf("ARQ CONTEUDO :\n");
     while (current != NULL) {
-        printf("\t(%u) %s", current->select, current->content);
+        printf("\t %s", current->content);
         current = current->next;
     }
     printf("---------------------\n");

@@ -23,15 +23,17 @@ int is_empty(const Trash *t) {
     return t->size == 0;
 }
 
-void push(Trash *t, long unsigned index, const char *content) {
+void push(Trash *t, unsigned block_index, unsigned line_index, const char *content) {
     if (is_full(t)) {
-        t->lc[t->start].index = index;
+        t->lc[t->start].block_index = block_index;
+        t->lc[t->start].line_index = line_index;
         free(t->lc[t->start].content);
         t->lc[t->start].content = strdup(content);
         t->start = (t->start + 1) % CAPACITY_RETURNS;
     } else {
         unsigned pos = (t->start + t->size) % CAPACITY_RETURNS;
-        t->lc[pos].index = index;
+        t->lc[t->start].block_index = block_index;
+        t->lc[t->start].line_index = line_index;
         t->lc[pos].content = strdup(content);
         t->size++;
     }
@@ -62,6 +64,7 @@ void free_stack(Trash *t) {
             free(t->lc[i].content);
         }
     }
+    free(t);
 }
 
 void print_stack(const Trash *t) {
@@ -74,7 +77,7 @@ void print_stack(const Trash *t) {
     printf("\tConteúdo da pilha:\n");
     for (unsigned i = 0; i < t->size; i++) {
         unsigned pos = (t->start + i) % CAPACITY_RETURNS;
-        printf("\t\tIndex: %lu, Content: %s\n", t->lc[pos].index, t->lc[pos].content);
+        printf("\t\tBlock : %u Ln: %u, Content: %s\n", t->lc[pos].block_index, t->lc[pos].line_index, t->lc[pos].content);
     }
     printf("---------------------------------\n");
 }

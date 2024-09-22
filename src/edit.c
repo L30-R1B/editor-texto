@@ -9,175 +9,226 @@
 #include "../include/file.h"
 
 void pointer_line_edit_move_up(TextFile *file) {
-    if (file->pointer_line_edit != NULL && file->pointer_line_edit->previous != NULL) {
-        file->pointer_line_edit = file->pointer_line_edit->previous;
-        file->index_pointer_line --;
-        if(file->line_marker_edit >= (strlen(file->pointer_line_edit->content) - 1))
-            file->line_marker_edit = (strlen(file->pointer_line_edit->content) - 1);
+    if (file->current_block->pointer_block != NULL) {
+        if(file->current_block->line_index > 0){
+            file->current_block->line_index --;
+            if(file->current_block->pointer_block->lines[file->current_block->line_index].content != NULL)
+                if(file->current_block->ch_index > strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1)
+                    file->current_block->ch_index = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1;
+        }else if(file->current_block->pointer_block->previous != NULL){
+            file->current_block->pointer_block = file->current_block->pointer_block->previous;
+            file->current_block->line_index = SIZE_BLOCK - 1;
+            if(file->current_block->pointer_block->lines[file->current_block->line_index].content != NULL)
+                if(file->current_block->ch_index > strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1)
+                    file->current_block->ch_index = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1;
+        }
     } else {
         printf("Não é possível mover o ponteiro para cima. Linha já está no início ou lista está vazia.\n");
     }
 }
 
 void pointer_line_edit_move_down(TextFile *file) {
-    if (file->pointer_line_edit != NULL && file->pointer_line_edit->next != NULL) {
-        file->pointer_line_edit = file->pointer_line_edit->next;
-        file->index_pointer_line ++;
-        if(file->line_marker_edit >= (strlen(file->pointer_line_edit->content) - 1))
-            file->line_marker_edit = (strlen(file->pointer_line_edit->content) - 1);
+    if (file->current_block->pointer_block != NULL) {
+        if(file->current_block->line_index < SIZE_BLOCK - 1){
+            file->current_block->line_index ++;
+            if(file->current_block->pointer_block->lines[file->current_block->line_index].content != NULL)
+                if(file->current_block->ch_index > strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1)
+                    file->current_block->ch_index = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1;
+        }else if(file->current_block->pointer_block->next != NULL){
+            file->current_block->pointer_block = file->current_block->pointer_block->next;
+            file->current_block->line_index = 0;
+            if(file->current_block->pointer_block->lines[file->current_block->line_index].content != NULL)
+                if(file->current_block->ch_index > strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1)
+                    file->current_block->ch_index = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1;
+        }
     } else {
-        printf("Não é possível mover o ponteiro para baixo. Linha já está no fim ou lista está vazia.\n");
+        printf("Não é possível mover o ponteiro para baixo. Linha já está no início ou lista está vazia.\n");
     }
 }
 
 void line_marker_edit_move_left(TextFile *file){
-    if(!file->line_marker_edit)
+    if(!file->current_block->ch_index){
+        pointer_line_edit_move_up(file);
         return;
-    file->line_marker_edit --;
+    }
+    file->current_block->ch_index --;
 }
 void line_marker_edit_move_right(TextFile *file){
-    if(file->line_marker_edit >= (strlen(file->pointer_line_edit->content) - 1))
+    if(file->current_block->ch_index >= (strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1)){
+        pointer_line_edit_move_down(file);
         return;
-    file->line_marker_edit ++;
+    }
+    file->current_block->ch_index ++;
 }
 
 void new_line(TextFile *file) {
-    Lines *new_line = (Lines *) malloc(sizeof(Lines));
-    if (new_line == NULL) {
-        perror("Erro ao alocar memória para nova linha");
-        return;
+    Block *current_block = file->current_block->pointer_block;
+
+    if (file->current_block->line_index > SIZE_BLOCK - 2) {
+        Block *new_block = (Block *) malloc(sizeof(Block));
+        new_block->number_lines = 0;
+        if (new_block == NULL) {
+            perror("Erro ao alocar memória para novo bloco");
+            return;
+        }
+
+        new_block->previous = current_block;
+        new_block->next = NULL;
+        for (unsigned i = 0; i < SIZE_BLOCK; i++) {
+            new_block->lines[i].content = NULL;
+        }
+
+        if (current_block != NULL) {
+            current_block->next = new_block;
+        }
+
+        file->current_block->pointer_block = new_block;
+        file->current_block->line_index = 0;
+        current_block = new_block;
+    }else{
+        file->current_block->line_index++;
+        if(file->current_block->pointer_block->lines[file->current_block->line_index].content != NULL){
+            unsigned index = SIZE_BLOCK;
+            unsigned char create = 0;
+            for(unsigned i = SIZE_BLOCK - 1; i >= file->current_block->line_index; i --){
+                if(file->current_block->pointer_block->lines[i].content == NULL){
+                    index = i;
+                    break;
+                }
+            }
+            create = index == SIZE_BLOCK ? 1 : 0;
+            printf("(((%u)))\n", create);
+            if(create){
+                struct Block *new_block = create_block();
+                tie_blocks(file->current_block->pointer_block, new_block, file->current_block->pointer_block->next);
+                char *buffer = file->current_block->pointer_block->lines[SIZE_BLOCK - 1].content;
+                for(unsigned i = SIZE_BLOCK - 1; i > file->current_block->line_index; i --){
+                    file->current_block->pointer_block->lines[i].content = file->current_block->pointer_block->lines[i - 1].content;
+                }
+                free(new_block->lines[0].content);
+                new_block->lines[0].content = strdup(buffer);
+                new_block->number_lines = 1;
+                return;
+            }else{
+                for(unsigned i = index; i > file->current_block->line_index; i --){
+                    file->current_block->pointer_block->lines[i].content = file->current_block->pointer_block->lines[i - 1].content;
+                }
+                free(file->current_block->pointer_block->lines[file->current_block->line_index].content);
+            }
+        }
     }
-    
-    new_line->content = strdup("\n");
+
+    Line *new_line = &current_block->lines[file->current_block->line_index];
+    new_line->content = strdup("");
     if (new_line->content == NULL) {
         perror("Erro ao alocar memória para o conteúdo da nova linha");
-        free(new_line);
         return;
     }
-    
-    new_line->previous = NULL;
-    new_line->next = NULL;
 
-    if (file->pointer_line_edit != NULL) {
-        new_line->next = file->pointer_line_edit->next;
-        new_line->previous = file->pointer_line_edit;
-        
-        if (file->pointer_line_edit->next != NULL) {
-            file->pointer_line_edit->next->previous = new_line;
-        }
-        
-        file->pointer_line_edit->next = new_line;
-    } else {
-        new_line->next = file->init;
-        if (file->init != NULL) {
-            file->init->previous = new_line;
-        }
-        file->init = new_line;
-    }
-    
-    file->pointer_line_edit = new_line;
-    file->index_pointer_line ++;
+    file->current_block->ch_index = 0;
+    file->current_block->pointer_block->number_lines ++;
+
+    printf("Nova linha adicionada no bloco %p na posição %u\n", (void*) current_block, file->current_block->line_index);
 }
 
+
 void add_line(TextFile *file, const char *content, int position) {
-    Lines *new_line = (Lines *) malloc(sizeof(Lines));
-    if (new_line == NULL) {
-        perror("Erro ao alocar memória para Lines");
+    if (file == NULL || content == NULL || file->current_block == NULL) {
+        perror("Arquivo, conteúdo ou bloco atual não inicializado");
         return;
     }
-    
-    new_line->content = strdup(content);
-    new_line->previous = NULL;
-    new_line->next = NULL;
 
-    if (file->init == NULL) {
-        file->init = new_line;
-        file->pointer_line_edit = new_line;
-    } else {
-        if (file->pointer_line_edit != NULL) {
-            if (position == -1) {
-                new_line->next = file->pointer_line_edit;
-                new_line->previous = file->pointer_line_edit->previous;
+    Block *current_block = file->current_block->pointer_block;
 
-                if (file->pointer_line_edit->previous != NULL) {
-                    file->pointer_line_edit->previous->next = new_line;
-                } else {
-                    file->init = new_line;
-                }
-                file->pointer_line_edit->previous = new_line;
-            } else if (position == 0) {
-                if (file->pointer_line_edit != NULL) {
-                    free(file->pointer_line_edit->content);
-                    file->pointer_line_edit->content = strdup(content);
-                    free(new_line->content);
-                    free(new_line);
-                    file->index_pointer_line ++;
-                    return;
-                } else {
-                    new_line->next = file->init;
-                    if (file->init != NULL) {
-                        file->init->previous = new_line;
-                    }
-                    file->init = new_line;
-                }
-            } else if (position == 1) {
-                new_line->next = file->pointer_line_edit->next;
-                new_line->previous = file->pointer_line_edit;
-
-                if (file->pointer_line_edit->next != NULL) {
-                    file->pointer_line_edit->next->previous = new_line;
-                }
-
-                file->pointer_line_edit->next = new_line;
-            }
-        } else {
-            new_line->next = file->init;
-            if (file->init != NULL) {
-                file->init->previous = new_line;
-            }
-            file->init = new_line;
-        }
-
-        if (position != 0) {
-            file->pointer_line_edit = new_line;
-        }
-        if(position != -1)
-            file->index_pointer_line ++;
+    if (file->current_block->line_index >= SIZE_BLOCK) {
+        perror("Índice da linha fora dos limites do bloco");
+        return;
     }
+
+    if (position == 0) {
+        char *old_content = current_block->lines[file->current_block->line_index].content;
+        
+        if (old_content != NULL) {
+            free(old_content);
+        }else{
+            current_block->number_lines ++;
+        }
+        current_block->lines[file->current_block->line_index].content = strdup(content);
+        if (current_block->lines[file->current_block->line_index].content == NULL) {
+            perror("Erro ao duplicar conteúdo");
+            return;
+        }
+        return;
+    } else {
+        fprintf(stderr, "Inserção em posição diferente de 0 ainda não implementada.\n");
+    }
+
+    file->current_block->line_index ++;
 }
 
 
 void remove_line(TextFile *file, unsigned long index) {
-    if (file->init == NULL) {
-        printf("O arquivo está vazio.\n");
+    if (file == NULL || file->init_block == NULL || file->current_block == NULL) {
+        printf("O arquivo está vazio ou não inicializado.\n");
         return;
     }
 
-    Lines *current = file->init;
-    unsigned long count = 0;
+    Block *current_block = file->init_block;
+    unsigned long line_count = 0;
+    unsigned long block_index = 0;
 
-    while (current != NULL && count < index) {
-        current = current->next;
-        count++;
+    // Navegar até o bloco e a linha correspondente ao índice fornecido
+    while (current_block != NULL) {
+        for (unsigned i = 0; i < SIZE_BLOCK; i++) {
+            if (line_count == index) {
+                Line *current_line = &current_block->lines[i];
+                
+                if (current_line->content == NULL) {
+                    printf("Linha vazia, não encontrada no índice %lu.\n", index);
+                    return;
+                }
+
+                // Liberar o conteúdo da linha
+                free(current_line->content);
+                current_line->content = NULL;
+
+                // Ajustar as linhas subsequentes no bloco para preencher o espaço vazio
+                for (unsigned j = i; j < SIZE_BLOCK - 1; j++) {
+                    current_block->lines[j].content = current_block->lines[j + 1].content;
+                }
+
+                // Se for o último bloco e última linha, remover o bloco, se estiver vazio
+                if (i == SIZE_BLOCK - 1 && current_block->next == NULL) {
+                    current_block->lines[SIZE_BLOCK - 1].content = NULL; // Apaga o último conteúdo
+
+                    // Verificar se o bloco está vazio
+                    int is_empty = 1;
+                    for (unsigned k = 0; k < SIZE_BLOCK; k++) {
+                        if (current_block->lines[k].content != NULL) {
+                            is_empty = 0;
+                            break;
+                        }
+                    }
+
+                    if (is_empty) {
+                        if (current_block->previous != NULL) {
+                            current_block->previous->next = NULL;
+                        } else {
+                            file->init_block = NULL; // Se era o único bloco
+                        }
+
+                        free(current_block);
+                    }
+                }
+
+                printf("Linha no índice %lu removida.\n", index);
+                return;
+            }
+            line_count++;
+        }
+        current_block = current_block->next;
+        block_index++;
     }
 
-    if (current == NULL) {
-        printf("Linha não encontrada.\n");
-        return;
-    }
-    
-    if (current->previous != NULL) {
-        current->previous->next = current->next;
-    } else {
-        file->init = current->next;
-    }
-
-    if (current->next != NULL) {
-        current->next->previous = current->previous;
-    }
-
-    file->pointer_line_edit = current->previous;
-
-    free(current->content);
-    free(current);
+    printf("Linha não encontrada no índice %lu.\n", index);
 }

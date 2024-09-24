@@ -10,44 +10,38 @@
 #include "../include/stack.h"
 
 void test(TextFile *f){
-    for(int i = 0; i < 20; i ++)
+    for(int i = 0; i < 50; i ++)
         new_line(f);
-    char *str[10] = {"aaa", "bbb", "ccc", "ddd", "eee", "fff"};
-    int op;
-    for(int i = 0; i < 10; i ++)
+    for(int i = 0; i < 25; i ++)
         pointer_line_edit_move_up(f);
-    for(unsigned i = 0; i < 100; i ++){
-        op = rand() % 2;
-        if (op == 0) {
-            for(int i = 0; i < rand() % 8 + 1; i ++)
-                pointer_line_edit_move_up(f);
-//            printf("\t( up ) ");
-        } else{
-            for(int i = 0; i < rand() % 8 + 1; i ++)
-                pointer_line_edit_move_down(f);
-  //          printf("\t(down) ");
-        }
-        op = rand() % 6;
-    //    printf("insert %s (index B(%p) L(%u))\n", str[op], f->current_block->pointer_block, f->current_block->line_index);
-        add_line(f, str[op], 0);
-    }
 }
 
 int main(){
-    srand(time(NULL));
+
+
+    unsigned seed = time(NULL);
+    srand(seed);
 
     TextFile *f = create_file("teste.txt");
 
     test(f);
 
     print_file(f);
-    new_line(f);
-    new_line(f);
-    new_line(f);
-    print_file(f);
 
+    for(int i = 0; i < 50; i ++){
+        for(int j = 0; j < rand() % 25 + 1; j ++){
+            pointer_line_edit_move_up(f);
+        }
+        for(int j = 0; j < rand() % 25 + 1; j ++){
+            pointer_line_edit_move_down(f);
+        }
+        new_line(f);
+    }
+
+    print_file(f);
 
     free_file(f);
 
+    printf("SEED (%u)\n", seed);
     return 0;
 }

@@ -8,6 +8,8 @@
 #include "../include/edit.h"
 #include "../include/file.h"
 
+char *buffer;
+
 TextFile *create_file(const char *file_path) {
     TextFile *file = (TextFile *) malloc(sizeof(TextFile));
     if (file == NULL) {
@@ -117,16 +119,17 @@ void free_file(TextFile *file) {
 
     Block *current = file->init_block;
     while (current != NULL) {
+        //printf("Liberando bloco %p\n", (void*) current);
         Block *next = current->next;
         for (unsigned current_line = 0; current_line < SIZE_BLOCK; current_line++) {
             if (current->lines[current_line].content != NULL) {
+            //    printf("Liberando linha %u no bloco %p: %p\n", current_line, (void*) current, (void*) current->lines[current_line].content);
                 free(current->lines[current_line].content);
             }
         }
         free(current);
         current = next;
     }
-
     if (file->add != NULL) {
         free_stack(file->add);
     }
@@ -154,7 +157,7 @@ void print_file(TextFile *file) {
 
     printf("__________________________________________________________\n");
     
-    printf("\tADD\n");
+    /*printf("\tADD\n");
     if (file->add != NULL) {
         print_stack(file->add);
     } else {
@@ -171,7 +174,7 @@ void print_file(TextFile *file) {
     }
     
     printf("---------------------\n");
-    
+    */
     printf("ARQ CONTEUDO :\n");
     unsigned cont = 0;
     
@@ -179,13 +182,13 @@ void print_file(TextFile *file) {
         printf("\tBloco %u; Qtd linhas %u; %s : \n", cont, current->number_lines, (current == file->current_block->pointer_block ? "(B atual)" : ""));
         for (unsigned current_line = 0; current_line < SIZE_BLOCK; current_line++) {
             if (current->lines[current_line].content != NULL) {
-                printf("\t%s\t%s\n", ((current == file->current_block->pointer_block && current_line == file->current_block->line_index) ? "(L)" : "   "), current->lines[current_line].content);
+                printf("\t\t(%u)(%p, %p) %s\t%s\n", current_line, (void*) current, (void*) current->lines[current_line].content, ((current == file->current_block->pointer_block && current_line == file->current_block->line_index) ? "(L)" : "   "), current->lines[current_line].content);
             }
         }
         current = current->next;
         cont++;
     }
     
-    printf("---------------------\n");
+    //printf("---------------------\n");
     printf("__________________________________________________________\n");
 }

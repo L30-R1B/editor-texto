@@ -39,6 +39,7 @@ typedef struct {
 struct Block *create_block();
 TextFile *create_file(const char *file_path);
 void tie_blocks(Block *previous, Block *current, Block *next);
+void concatenate_blocks(Block *first_block, Block *second_block);
 void free_file(TextFile *file);
 void print_file(TextFile *file);
 

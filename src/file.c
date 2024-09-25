@@ -96,6 +96,17 @@ struct Block *create_block(){
     return new;
 }
 
+void free_block(Block *block) {
+    if (block != NULL) {
+        for (unsigned i = 0; i < SIZE_BLOCK; i++) {
+            if (block->lines[i].content != NULL) {
+                free(block->lines[i].content);
+            }
+        }
+        free(block);
+    }
+}
+
 void tie_blocks(Block *previous, Block *current, Block *next) {
     if (previous != NULL) {
         previous->next = current;
@@ -111,6 +122,36 @@ void tie_blocks(Block *previous, Block *current, Block *next) {
     }
 }
 
+void concatenate_blocks(Block *first_block, Block *second_block){
+    if(first_block == NULL || second_block == NULL)
+        return;
+    
+    if(first_block->number_lines == SIZE_BLOCK || second_block->number_lines == SIZE_BLOCK)
+        return;
+
+    unsigned index;
+    for(index = 0; index < second_block->number_lines; index ++){
+        if(first_block->number_lines == SIZE_BLOCK)
+            break;
+
+        first_block->lines[first_block->number_lines].content = strdup(second_block->lines[index].content);
+        first_block->number_lines ++;
+
+        if(index < second_block->number_lines - 1){
+            free(second_block->lines[index].content);
+            second_block->lines[index].content = strdup(second_block->lines[index + 1].content);
+        }
+    }
+    
+    second_block->number_lines -= index;
+
+    if(!second_block->number_lines){
+        Block *aux_block = second_block->next;
+        free_block(second_block);
+        tie_blocks(first_block->previous, first_block, aux_block);
+    }
+
+}
 
 void free_file(TextFile *file) {
     if (file == NULL) {
@@ -121,13 +162,7 @@ void free_file(TextFile *file) {
     while (current != NULL) {
         //printf("Liberando bloco %p\n", (void*) current);
         Block *next = current->next;
-        for (unsigned current_line = 0; current_line < SIZE_BLOCK; current_line++) {
-            if (current->lines[current_line].content != NULL) {
-            //    printf("Liberando linha %u no bloco %p: %p\n", current_line, (void*) current, (void*) current->lines[current_line].content);
-                free(current->lines[current_line].content);
-            }
-        }
-        free(current);
+        free_block(current);
         current = next;
     }
     if (file->add != NULL) {

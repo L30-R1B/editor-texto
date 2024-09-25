@@ -77,7 +77,7 @@ void new_line(TextFile *file) {
         if(file->current_block->pointer_block->lines[file->current_block->line_index].content != NULL){
             unsigned index = SIZE_BLOCK;
             unsigned char create = 0;
-            for(unsigned i = SIZE_BLOCK - 1; i >= file->current_block->line_index; i --){
+            for(unsigned i = SIZE_BLOCK - 1; i > file->current_block->line_index; i --){
                 if(file->current_block->pointer_block->lines[i].content == NULL){
                     index = i;
                     break;
@@ -87,26 +87,30 @@ void new_line(TextFile *file) {
             if(create){
                 struct Block *new_block = create_block();
                 tie_blocks(file->current_block->pointer_block, new_block, file->current_block->pointer_block->next);
-                char *buffer = file->current_block->pointer_block->lines[SIZE_BLOCK - 1].content;
+                char *buffer = strdup(file->current_block->pointer_block->lines[SIZE_BLOCK - 1].content);
 
                 for(unsigned i = SIZE_BLOCK - 1; i > file->current_block->line_index; i--){
+                    free(file->current_block->pointer_block->lines[i].content);
                     file->current_block->pointer_block->lines[i].content = strdup(file->current_block->pointer_block->lines[i - 1].content);
-                }                
+                }
                 new_block->lines[0].content = strdup(buffer);
+                free(buffer);                
                 new_block->number_lines = 1;
+                concatenate_blocks(new_block, new_block->next);
             }else{
                 for(unsigned i = index; i > file->current_block->line_index; i --){
                     file->current_block->pointer_block->lines[i].content = file->current_block->pointer_block->lines[i - 1].content;
                 }
+                file->current_block->pointer_block->lines[file->current_block->line_index].content = NULL;
             }
         }
     }
 
-    Line *new_line = &file->current_block->pointer_block->lines[file->current_block->line_index];
+    if(file->current_block->pointer_block->lines[file->current_block->line_index].content != NULL)
+        free(file->current_block->pointer_block->lines[file->current_block->line_index].content);
 
-    printf("insert block(%p);  line (%u); content (%s)\n", (void*) file->current_block->pointer_block, file->current_block->line_index, "");
-    new_line->content = strdup("");
-    if (new_line->content == NULL) {
+    file->current_block->pointer_block->lines[file->current_block->line_index].content = strdup("");
+    if (file->current_block->pointer_block->lines[file->current_block->line_index].content == NULL) {
         perror("Erro ao alocar memória para o conteúdo da nova linha");
         return;
     }

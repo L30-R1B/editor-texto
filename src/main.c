@@ -19,16 +19,14 @@ void test(TextFile *f){
 int main(){
 
 
-    unsigned seed = time(NULL);
+    unsigned seed = 1727275583;// time(NULL);
     srand(seed);
 
     TextFile *f = create_file("teste.txt");
 
     test(f);
 
-    print_file(f);
-
-    for(int i = 0; i < 50; i ++){
+    for(int i = 0; i < 50000; i ++){
         for(int j = 0; j < rand() % 25 + 1; j ++){
             pointer_line_edit_move_up(f);
         }

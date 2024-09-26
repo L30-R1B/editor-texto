@@ -129,7 +129,7 @@ void concatenate_blocks(Block *first_block, Block *second_block){
     if(first_block->number_lines == SIZE_BLOCK || second_block->number_lines == SIZE_BLOCK)
         return;
 
-    unsigned index;
+    int index;
     for(index = 0; index < second_block->number_lines; index ++){
         if(first_block->number_lines == SIZE_BLOCK)
             break;
@@ -213,6 +213,7 @@ void print_file(TextFile *file) {
     printf("ARQ CONTEUDO :\n");
     unsigned cont = 0;
     
+        printf("\tChar index : %u\n", file->current_block->ch_index);
     while (current != NULL) {
         printf("\tBloco %u; Qtd linhas %u; %s : \n", cont, current->number_lines, (current == file->current_block->pointer_block ? "(B atual)" : ""));
         for (unsigned current_line = 0; current_line < SIZE_BLOCK; current_line++) {

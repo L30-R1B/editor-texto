@@ -8,13 +8,16 @@
 #include "../include/edit.h"
 #include "../include/file.h"
 
-void pointer_line_edit_move_up(TextFile *file) {
+int pointer_line_edit_move_up(TextFile *file) {
     if (file->current_block->pointer_block != NULL) {
+        unsigned len = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content);
         if(file->current_block->line_index > 0){
             file->current_block->line_index --;
             if(file->current_block->pointer_block->lines[file->current_block->line_index].content != NULL)
-                if(file->current_block->ch_index > strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1)
-                    file->current_block->ch_index = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1;
+                if(file->current_block->ch_index > len - 1){
+                    file->current_block->ch_index = len - 1;
+                    return 1;
+                }
         }else if(file->current_block->pointer_block->previous != NULL){
             file->current_block->pointer_block = file->current_block->pointer_block->previous;
             for(int i = SIZE_BLOCK - 1; i >= 0; i --){
@@ -24,44 +27,59 @@ void pointer_line_edit_move_up(TextFile *file) {
                 }
             }
             if(file->current_block->pointer_block->lines[file->current_block->line_index].content != NULL)
-                if(file->current_block->ch_index > strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1)
-                    file->current_block->ch_index = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1;
+                if(file->current_block->ch_index > len - 1){
+                    file->current_block->ch_index = len - 1;
+                    return 1;
+                }
         }
     } else {
         printf("Não é possível mover o ponteiro para cima. Linha já está no início ou lista está vazia.\n");
     }
+    return 0;
 }
-void pointer_line_edit_move_down(TextFile *file) {
+int pointer_line_edit_move_down(TextFile *file) {
     if (file->current_block->pointer_block != NULL) {
+        unsigned len = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content);
         if(file->current_block->line_index < SIZE_BLOCK - 1 && file->current_block->pointer_block->lines[file->current_block->line_index + 1].content != NULL){
             file->current_block->line_index ++;
             if(file->current_block->pointer_block->lines[file->current_block->line_index].content != NULL)
-                if(file->current_block->ch_index > strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1)
-                    file->current_block->ch_index = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1;
+                if(file->current_block->ch_index > len - 1){
+                    file->current_block->ch_index = len - 1;
+                    return 1;
+                }
         }else if(file->current_block->pointer_block->next != NULL){
             file->current_block->pointer_block = file->current_block->pointer_block->next;
             file->current_block->line_index = 0;
             if(file->current_block->pointer_block->lines[file->current_block->line_index].content != NULL)
-                if(file->current_block->ch_index > strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1)
-                    file->current_block->ch_index = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1;
+                if(file->current_block->ch_index > len - 1){
+                    file->current_block->ch_index = len - 1;
+                    return 1;
+                }
         }
     } else {
         printf("Não é possível mover o ponteiro para baixo. Linha já está no início ou lista está vazia.\n");
     }
+    return 0;
 }
-void line_marker_edit_move_left(TextFile *file){
-    if(!file->current_block->ch_index){
-        pointer_line_edit_move_up(file);
-        return;
+
+void line_marker_edit_move_left(TextFile *file) {
+    if (file->current_block->ch_index == 0) {
+        if (pointer_line_edit_move_up(file)) {
+            file->current_block->ch_index = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1;
+        }
+    } else {
+        file->current_block->ch_index--;
     }
-    file->current_block->ch_index --;
 }
-void line_marker_edit_move_right(TextFile *file){
-    if(file->current_block->ch_index >= (strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1)){
-        pointer_line_edit_move_down(file);
-        return;
+
+void line_marker_edit_move_right(TextFile *file) {
+    if (file->current_block->ch_index >= strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content) - 1) {
+        if (pointer_line_edit_move_down(file)) {
+            file->current_block->ch_index = 0;
+        }
+    } else {
+        file->current_block->ch_index++;
     }
-    file->current_block->ch_index ++;
 }
 
 void new_line(TextFile *file) {
@@ -154,68 +172,80 @@ void add_line(TextFile *file, const char *content, int position) {
 
     file->current_block->line_index ++;
 }
-void remove_line(TextFile *file, unsigned long index) {
-    if (file == NULL || file->init_block == NULL || file->current_block == NULL) {
-        printf("O arquivo está vazio ou não inicializado.\n");
+
+void remove_line(TextFile *file, int position){
+    if(file == NULL || file->current_block->pointer_block == NULL)
         return;
-    }
-
-    Block *current_block = file->init_block;
-    unsigned long line_count = 0;
-    unsigned long block_index = 0;
-
-    // Navegar até o bloco e a linha correspondente ao índice fornecido
-    while (current_block != NULL) {
-        for (unsigned i = 0; i < SIZE_BLOCK; i++) {
-            if (line_count == index) {
-                Line *current_line = &current_block->lines[i];
-                
-                if (current_line->content == NULL) {
-                    printf("Linha vazia, não encontrada no índice %lu.\n", index);
-                    return;
-                }
-
-                // Liberar o conteúdo da linha
-                free(current_line->content);
-                current_line->content = NULL;
-
-                // Ajustar as linhas subsequentes no bloco para preencher o espaço vazio
-                for (unsigned j = i; j < SIZE_BLOCK - 1; j++) {
-                    current_block->lines[j].content = current_block->lines[j + 1].content;
-                }
-
-                // Se for o último bloco e última linha, remover o bloco, se estiver vazio
-                if (i == SIZE_BLOCK - 1 && current_block->next == NULL) {
-                    current_block->lines[SIZE_BLOCK - 1].content = NULL; // Apaga o último conteúdo
-
-                    // Verificar se o bloco está vazio
-                    int is_empty = 1;
-                    for (unsigned k = 0; k < SIZE_BLOCK; k++) {
-                        if (current_block->lines[k].content != NULL) {
-                            is_empty = 0;
-                            break;
-                        }
-                    }
-
-                    if (is_empty) {
-                        if (current_block->previous != NULL) {
-                            current_block->previous->next = NULL;
-                        } else {
-                            file->init_block = NULL; // Se era o único bloco
-                        }
-
-                        free(current_block);
-                    }
-                }
-
-                printf("Linha no índice %lu removida.\n", index);
-                return;
-            }
-            line_count++;
+    
+    if(!position){
+        Block *block = file->current_block->pointer_block;
+    
+        if (block->lines[position].content != NULL) {
+            free(block->lines[position].content);
+            block->lines[position].content = NULL;
         }
-        current_block = current_block->next;
-        block_index++;
+
+        for (int index = position; index < block->number_lines - 1; index++) {
+            block->lines[index].content = block->lines[index + 1].content;
+            block->lines[index + 1].content = NULL;
+        }
+        block->number_lines--;
+    }
+}
+
+void add_char(TextFile *file, const char ch, int mode){
+    if(file == NULL)
+        return;
+
+    int index;
+    int len = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content);
+
+    if(mode == 1){
+        if((int) file->current_block->ch_index + 1 > len - 1){
+            if(pointer_line_edit_move_down(file)){
+                len = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content);
+                file->current_block->ch_index = 0;
+            }
+        }
+        else{
+            index = file->current_block->ch_index + 1;
+        }
+    }else if(mode == -1){
+        if(((int) file->current_block->ch_index - 1) < 0){
+            if(pointer_line_edit_move_up(file)){
+                len = strlen(file->current_block->pointer_block->lines[file->current_block->line_index].content);
+                file->current_block->ch_index = len - 1;
+            }
+        }
+        else{
+            index = file->current_block->ch_index - 1;
+        }
+    }else{
+        index = file->current_block->ch_index;
     }
 
-    printf("Linha não encontrada no índice %lu.\n", index);
+    char aux[len + 2];
+
+    for(int i = 0, j = 0; i < len + 1; i ++){
+        if(i == index){
+            aux[i] = ch;
+            continue;
+        }
+        
+        aux[i] = file->current_block->pointer_block->lines[file->current_block->line_index].content[j];
+        j ++;
+    }
+    
+    aux[len + 1] = '\0';
+
+    free(file->current_block->pointer_block->lines[file->current_block->line_index].content);
+    file->current_block->pointer_block->lines[file->current_block->line_index].content = strdup(aux);
+}
+
+void remove_char(TextFile *file, int mode){
+    if(file == NULL)
+        return;
+    
+    if(!mode)
+        return;
 }

@@ -218,7 +218,15 @@ void print_file(TextFile *file) {
         printf("\tBloco %u; Qtd linhas %u; %s : \n", cont, current->number_lines, (current == file->current_block->pointer_block ? "(B atual)" : ""));
         for (unsigned current_line = 0; current_line < SIZE_BLOCK; current_line++) {
             if (current->lines[current_line].content != NULL) {
-                printf("\t\t(%u)(%p, %p) %s\t%s\n", current_line, (void*) current, (void*) current->lines[current_line].content, ((current == file->current_block->pointer_block && current_line == file->current_block->line_index) ? "(L)" : "   "), current->lines[current_line].content);
+                printf("\t\t(%u)(%p, %p) %s\t", current_line, (void*) current, (void*) current->lines[current_line].content, ((current == file->current_block->pointer_block && current_line == file->current_block->line_index) ? "(L)" : "   "));
+                for(unsigned ch = 0; ch < strlen(current->lines[current_line].content); ch ++){
+                    if(current == file->current_block->pointer_block && current_line == file->current_block->line_index && ch == file->current_block->ch_index){
+                        printf("[%c]", current->lines[current_line].content[ch]);
+                        continue;
+                    }
+                    printf("%c", current->lines[current_line].content[ch]);
+                }
+                printf("\n");
             }
         }
         current = current->next;

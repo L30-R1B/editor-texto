@@ -273,8 +273,54 @@ void remove_char(TextFile *file, int mode) {
             file->current_block->line_index --;
             file->current_block->ch_index = previous_content_len;
         }
-    }else if(index == current_content_len){
-        
+    }else if(index == current_content_len - 1){
+        if(file->current_block->line_index == SIZE_BLOCK - 1){
+            Block *next_block = file->current_block->pointer_block->next;
+            if (next_block != NULL) {
+                Line *next_line = &next_block->lines[0];
+                char *next_content = next_line->content;
+                int next_content_len = strlen(next_content);
+                char *new_concat_content = realloc(next_content, (next_content_len + current_content_len + 1) * sizeof(char));
+                if (new_concat_content == NULL) {
+                    return;
+                }
+                next_line->content = new_concat_content;
+                strcat(next_line->content, current_content);
+                free(file->current_block->pointer_block->lines[file->current_block->line_index].content);
+                file->current_block->pointer_block->lines[file->current_block->line_index].content = NULL;
+
+                file->current_block->pointer_block->number_lines--;
+                file->current_block->pointer_block = next_block;
+                file->current_block->line_index = 0;
+                
+                file->current_block->ch_index = current_content_len;
+                current_content = file->current_block->pointer_block->lines[file->current_block->line_index].content;
+                current_content_len = strlen(current_content);
+            }else{
+                return;
+            }
+        }else{
+            Line *next_line = &file->current_block->pointer_block->lines[file->current_block->line_index + 1];
+            char *next_content = next_line->content;
+            int next_content_len = strlen(next_content);
+            char *new_concat_content = realloc(next_content, (next_content_len + current_content_len + 1) * sizeof(char));
+            if(new_concat_content == NULL){
+                return;
+            }
+            next_line->content = new_concat_content;
+            strcat(next_line->content, current_content);
+            free(current_content);
+
+            for (int i = file->current_block->line_index; i < file->current_block->pointer_block->number_lines - 1; i++) {
+                file->current_block->pointer_block->lines[i].content = file->current_block->pointer_block->lines[i + 1].content;
+            }
+
+            file->current_block->pointer_block->number_lines--;
+            file->current_block->pointer_block->lines[file->current_block->pointer_block->number_lines].content = NULL;
+
+            file->current_block->line_index --;
+            file->current_block->ch_index = current_content_len;
+        }
     }
 }
 

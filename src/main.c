@@ -47,8 +47,8 @@ int main(){
     add_char(f, 'D', -1);
     add_char(f, 'O', -1);
 
-    f->current_block->ch_index = 0;
-    f->current_block->line_index = 2;
+    f->current_block->ch_index = 6;
+    f->current_block->line_index = 7;
 
 
     print_file(f);
